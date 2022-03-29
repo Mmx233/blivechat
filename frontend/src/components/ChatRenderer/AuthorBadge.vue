@@ -1,11 +1,11 @@
 <template>
-  <yt-live-chat-author-badge-renderer :type="authorTypeText" v-if="isAdmin || privilegeType > 0">
+  <yt-live-chat-author-badge-renderer :type="authorTypeText">
     <el-tooltip :content="readableAuthorTypeText" placement="top">
       <div id="image" class="style-scope yt-live-chat-author-badge-renderer">
-        
+
         <img v-if="privilegeType > 0" :src="`/static/img/icons/guard-level-${privilegeType}.png`"
           class="style-scope yt-live-chat-author-badge-renderer" :alt="readableAuthorTypeText">
-        
+
         <yt-icon v-if="isAdmin" class="style-scope yt-live-chat-author-badge-renderer">
           <svg viewBox="0 0 16 16" class="style-scope yt-icon" preserveAspectRatio="xMidYMid meet" focusable="false"
             style="pointer-events: none; display: block; width: 100%; height: 100%;"

@@ -1,38 +1,30 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import VueI18n from 'vue-i18n'
 import {
-  Aside, Autocomplete, Badge, Button, Card, Col, ColorPicker, Container, Divider, Form, FormItem, Image,
+  Aside, Autocomplete, Badge, Button, ButtonGroup, Card, Col, ColorPicker, Container, Divider, Form, FormItem, Image,
   Input, Main, Menu, MenuItem, Message, Option, OptionGroup, Radio, RadioGroup, Row, Select, Scrollbar,
-  Slider, Submenu, Switch, TabPane, Tabs, Tooltip
+  Slider, Submenu, Switch, Table, TableColumn, TabPane, Tabs, Tooltip
 } from 'element-ui'
 import axios from 'axios'
 
-import App from './App.vue'
+import * as i18n from './i18n'
+import App from './App'
 import Layout from './layout'
-import Home from './views/Home.vue'
+import Home from './views/Home'
 import StyleGenerator from './views/StyleGenerator'
 import Help from './views/Help'
-import Room from './views/Room.vue'
-import NotFound from './views/NotFound.vue'
+import Room from './views/Room'
+import NotFound from './views/NotFound'
 
-import zh from './lang/zh'
-import ja from './lang/ja'
-import en from './lang/en'
-
-if (process.env.NODE_ENV === 'development') {
-  // 开发时使用localhost:12450
-  axios.defaults.baseURL = 'http://localhost:12450'
-}
 axios.defaults.timeout = 10 * 1000
 
 Vue.use(VueRouter)
-Vue.use(VueI18n)
 // 初始化element
 Vue.use(Aside)
 Vue.use(Autocomplete)
 Vue.use(Badge)
 Vue.use(Button)
+Vue.use(ButtonGroup)
 Vue.use(Card)
 Vue.use(Col)
 Vue.use(ColorPicker)
@@ -55,6 +47,8 @@ Vue.use(Scrollbar)
 Vue.use(Slider)
 Vue.use(Submenu)
 Vue.use(Switch)
+Vue.use(Table)
+Vue.use(TableColumn)
 Vue.use(TabPane)
 Vue.use(Tabs)
 Vue.use(Tooltip)
@@ -71,12 +65,17 @@ const router = new VueRouter({
       path: '/',
       component: Layout,
       children: [
-        {path: '', component: Home},
-        {path: 'stylegen', name: 'stylegen', component: StyleGenerator},
-        {path: 'help', name: 'help', component: Help}
+        { path: '', component: Home },
+        { path: 'stylegen', name: 'stylegen', component: StyleGenerator },
+        { path: 'help', name: 'help', component: Help }
       ]
     },
-    {path: '/room/test', name: 'test_room', component: Room, props: route => ({strConfig: route.query})},
+    {
+      path: '/room/test',
+      name: 'test_room',
+      component: Room,
+      props: route => ({ strConfig: route.query })
+    },
     {
       path: '/room/:roomId',
       name: 'room',
@@ -86,34 +85,15 @@ const router = new VueRouter({
         if (isNaN(roomId)) {
           roomId = null
         }
-        return {roomId, strConfig: route.query}
+        return { roomId, strConfig: route.query }
       }
     },
-    {path: '*', component: NotFound}
+    { path: '*', component: NotFound }
   ]
-})
-
-let locale = window.localStorage.lang
-if (!locale) {
-  let lang = navigator.language
-  if (lang.startsWith('zh')) {
-    locale = 'zh'
-  } else if (lang.startsWith('ja')) {
-    locale = 'ja'
-  } else {
-    locale = 'en'
-  }
-}
-const i18n = new VueI18n({
-  locale,
-  fallbackLocale: 'en',
-  messages: {
-    zh, ja, en
-  }
 })
 
 new Vue({
   render: h => h(App),
   router,
-  i18n
+  i18n: i18n.i18n
 }).$mount('#app')

@@ -1,17 +1,19 @@
 <template>
-  <chat-renderer ref="renderer"  
+  <chat-renderer ref="renderer"
   :showGiftInfo="config.showGiftInfo"
   :danmakuAtBottom="config.danmakuAtBottom" :tickerAtButtom="config.tickerAtButtom"
   :showTranslateDanmakuOnly="config.showTranslateDanmakuOnly"
-  :minGiftPrice="config.minGiftPrice" :minTickerPrice="config.minTickerPrice" 
-  :maxNumber="config.maxNumber" :fadeOutNum="config.fadeOutNum" :pinTime="config.pinTime" 
+  :minGiftPrice="config.minGiftPrice" :minTickerPrice="config.minTickerPrice"
+  :maxNumber="config.maxNumber" :fadeOutNum="config.fadeOutNum" :pinTime="config.pinTime"
   :imageShowType="config.imageShowType" :maxImage="config.maxImage"
   >
   </chat-renderer>
 </template>
 
 <script>
-import {mergeConfig, toBool, toInt, toFloat} from '@/utils'
+import * as i18n from '@/i18n'
+import { mergeConfig, toBool, toInt , toFloat} from '@/utils'
+import * as trie from '@/utils/trie'
 import * as pronunciation from '@/utils/pronunciation'
 import * as chatConfig from '@/api/chatConfig'
 import ChatClientTest from '@/api/chat/ChatClientTest'
@@ -37,17 +39,40 @@ export default {
   },
   data() {
     return {
-      config: {...chatConfig.DEFAULT_CONFIG},
+      config: chatConfig.deepCloneDefaultConfig(),
       chatClient: null,
       pronunciationConverter: null
     }
   },
   computed: {
-    blockKeywords() {
-      return this.config.blockKeywords.split('\n').filter(val => val)
+    blockKeywordsTrie() {
+      let blockKeywords = this.config.blockKeywords.split('\n')
+      let res = new trie.Trie()
+      for (let keyword of blockKeywords) {
+        if (keyword !== '') {
+          res.set(keyword, true)
+        }
+      }
+      return res
     },
-    blockUsers() {
-      return this.config.blockUsers.split('\n').filter(val => val)
+    blockUsersTrie() {
+      let blockUsers = this.config.blockUsers.split('\n')
+      let res = new trie.Trie()
+      for (let user of blockUsers) {
+        if (user !== '') {
+          res.set(user, true)
+        }
+      }
+      return res
+    },
+    emoticonsTrie() {
+      let res = new trie.Trie()
+      for (let emoticon of this.config.emoticons) {
+        if (emoticon.keyword !== '' && emoticon.url !== '') {
+          res.set(emoticon.keyword, emoticon)
+        }
+      }
+      return res
     }
   },
   mounted() {
@@ -71,17 +96,21 @@ export default {
   },
   methods: {
     initConfig() {
-      // console.log("初始化config")
-      //* 留空的使用上次预设值
+      let locale = this.strConfig.lang
+      if (locale) {
+      i18n.setLocale(locale)
+      }
+
       let cfg = {...chatConfig.getLocalConfig()}
+      // 留空的使用默认值
       for (let i in this.strConfig) {
         if (this.strConfig[i] !== '') {
           cfg[i] = this.strConfig[i]
         }
       }
       //* 若上次预设值有留空，则使用默认值
-      cfg = mergeConfig(cfg, chatConfig.DEFAULT_CONFIG)
-  
+      cfg = mergeConfig(cfg, chatConfig.deepCloneDefaultConfig())
+
       cfg.minGiftPrice = toFloat(cfg.minGiftPrice, chatConfig.DEFAULT_CONFIG.minGiftPrice)
       cfg.minTickerPrice = toFloat(cfg.minTickerPrice, chatConfig.DEFAULT_CONFIG.minTickerPrice)
 
@@ -103,23 +132,37 @@ export default {
       cfg.maxNumber = toInt(cfg.maxNumber, chatConfig.DEFAULT_CONFIG.maxNumber)
       cfg.fadeOutNum = toInt(cfg.fadeOutNum, chatConfig.DEFAULT_CONFIG.fadeOutNum)
       cfg.pinTime = toInt(cfg.pinTime, chatConfig.DEFAULT_CONFIG.pinTime)
-      
+
       cfg.imageShowType = toInt(cfg.imageShowType, chatConfig.DEFAULT_CONFIG.imageShowType)
       cfg.maxImage = toInt(cfg.maxImage, chatConfig.DEFAULT_CONFIG.maxImage)
+
 
       cfg.blockGiftDanmaku = toBool(cfg.blockGiftDanmaku)
       cfg.blockLevel = toInt(cfg.blockLevel, chatConfig.DEFAULT_CONFIG.blockLevel)
       cfg.blockNewbie = toBool(cfg.blockNewbie)
       cfg.blockNotMobileVerified = toBool(cfg.blockNotMobileVerified)
       cfg.blockMedalLevel = toInt(cfg.blockMedalLevel, chatConfig.DEFAULT_CONFIG.blockMedalLevel)
+
       cfg.relayMessagesByServer = toBool(cfg.relayMessagesByServer)
       cfg.autoTranslate = toBool(cfg.autoTranslate)
+      cfg.emoticons = this.toObjIfJson(cfg.emoticons)
 
       cfg.minDanmakuInterval = toInt(cfg.minDanmakuInterval, chatConfig.DEFAULT_CONFIG.minDanmakuInterval)
       cfg.maxDanmakuInterval = toInt(cfg.maxDanmakuInterval, chatConfig.DEFAULT_CONFIG.maxDanmakuInterval)
 
 
+      chatConfig.sanitizeConfig(cfg)
       this.config = cfg
+    },
+    toObjIfJson(str) {
+      if (typeof str !== 'string') {
+        return str
+      }
+      try {
+        return JSON.parse(str)
+      } catch {
+        return {}
+      }
     },
     initChatClient() {
       if (this.roomId === null) {
@@ -169,6 +212,7 @@ export default {
         authorName: data.authorName,
         authorType: data.authorType,
         content: data.content,
+        richContent: this.getRichContent(data),
         privilegeType: data.privilegeType,
         medalName: data.medalName,
         medalLevel: data.medalLevel,
@@ -187,7 +231,7 @@ export default {
         // console.log("只显示以“"+ this.config.translationSign +"”开头的翻译弹幕")
         return
       }
-      
+
       let price = (data.coinType == 'gold') ? (data.totalCoin / 1000) : 0
       if (this.mergeSimilarGift(data.authorName, price, data.giftName, data.num)) {
         return
@@ -196,7 +240,7 @@ export default {
       // if (price < this.config.minGiftPrice) {
       //  return
       // }
-      
+
       let message = {
         id: data.id,
         type: constants.MESSAGE_TYPE_GIFT,
@@ -228,7 +272,7 @@ export default {
         authorName: data.authorName,
         authorNamePronunciation: this.getPronunciation(data.authorName),
         privilegeType: data.privilegeType,
-        title: data.authorName,
+        title: this.$t('chat.membershipTitle'),
         price: price
       }
       this.$refs.renderer.addMessage(message)
@@ -261,15 +305,13 @@ export default {
       this.$refs.renderer.addMessage(message)
     },
     onDelSuperChat(data) {
-      for (let id of data.ids) {
-        this.$refs.renderer.delMessage(id)
-      }
+      this.$refs.renderer.delMessages(data.ids)
     },
     onUpdateTranslation(data) {
       if (!this.config.autoTranslate) {
         return
       }
-      this.$refs.renderer.updateMessage(data.id, {translation: data.translation})
+      this.$refs.renderer.updateMessage(data.id, { translation: data.translation })
     },
 
     filterTextMessage(data) {
@@ -284,23 +326,26 @@ export default {
       } else if (this.config.blockMedalLevel > 0 && data.medalLevel < this.config.blockMedalLevel) {
         return false
       }
-      return this.filterSuperChatMessage(data)
+      return this.filterByContent(data.content) && this.filterByAuthorName(data.authorName)
     },
     filterSuperChatMessage(data) {
-      for (let keyword of this.blockKeywords) {
-        if (data.content.indexOf(keyword) !== -1) {
-          return false
-        }
-      }
-      return this.filterNewMemberMessage(data)
+      return this.filterByContent(data.content) && this.filterByAuthorName(data.authorName)
     },
     filterNewMemberMessage(data) {
-      for (let user of this.blockUsers) {
-        if (data.authorName === user) {
+      return this.filterByAuthorName(data.authorName)
+    },
+    filterByContent(content) {
+      let blockKeywordsTrie = this.blockKeywordsTrie
+      for (let i = 0; i < content.length; i++) {
+        let remainContent = content.substring(i)
+        if (blockKeywordsTrie.greedyMatch(remainContent) !== null) {
           return false
         }
       }
       return true
+    },
+    filterByAuthorName(authorName) {
+      return !this.blockUsersTrie.has(authorName)
     },
     mergeSimilarText(content) {
       if (!this.config.mergeSimilarDanmaku) {
@@ -319,6 +364,66 @@ export default {
         return ''
       }
       return this.pronunciationConverter.getPronunciation(text)
+    },
+    getRichContent(data) {
+      let richContent = []
+
+      // B站官方表情
+      if (data.emoticon !== null) {
+        richContent.push({
+          type: constants.CONTENT_TYPE_IMAGE,
+          text: data.content,
+          url: data.emoticon
+        })
+        return richContent
+      }
+
+      // 没有自定义表情，只能是文本
+      if (this.config.emoticons.length === 0) {
+        richContent.push({
+          type: constants.CONTENT_TYPE_TEXT,
+          text: data.content
+        })
+        return richContent
+      }
+
+      // 可能含有自定义表情，需要解析
+      let emoticonsTrie = this.emoticonsTrie
+      let startPos = 0
+      let pos = 0
+      while (pos < data.content.length) {
+        let remainContent = data.content.substring(pos)
+        let matchEmoticon = emoticonsTrie.greedyMatch(remainContent)
+        if (matchEmoticon === null) {
+          pos++
+          continue
+        }
+
+        // 加入之前的文本
+        if (pos !== startPos) {
+          richContent.push({
+            type: constants.CONTENT_TYPE_TEXT,
+            text: data.content.slice(startPos, pos)
+          })
+        }
+
+        // 加入表情
+        richContent.push({
+          type: constants.CONTENT_TYPE_IMAGE,
+          text: matchEmoticon.keyword,
+          url: matchEmoticon.url
+        })
+        pos += matchEmoticon.keyword.length
+        startPos = pos
+      }
+      // 加入尾部的文本
+      if (pos !== startPos) {
+        richContent.push({
+          type: constants.CONTENT_TYPE_TEXT,
+          text: data.content.slice(startPos, pos)
+        })
+      }
+      return richContent
     }
   }
 }

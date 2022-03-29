@@ -71,7 +71,7 @@
               </el-col>
               <el-col :xs="24" :sm="8">
                 <el-form-item :label="$t('home.translationSign')">
-                  <el-input v-model.trim="form.translationSign" 
+                  <el-input v-model.trim="form.translationSign"
                   maxLength='1'
                   :placeholder="$t('home.onlyOneCharacter')"
                   ></el-input>
@@ -112,7 +112,7 @@
                 <el-form-item :label="$t('home.imageShowType')">
                   <el-select ref="imageShowTypeInput" v-model="form.imageShowType">
                     <el-option v-for="imageShowType in $t('home.imageShowTypes')" :key="imageShowType" v-bind:value="imageShowType.id">{{imageShowType.name}}
-                    </el-option> 
+                    </el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -196,7 +196,35 @@
                 </el-form-item>
               </el-col>
             </el-row>
-            
+
+          </el-tab-pane>
+
+          <el-tab-pane :label="$t('home.emoticon')">
+            <el-table :data="form.emoticons">
+              <el-table-column prop="keyword" :label="$t('home.emoticonKeyword')" width="170">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.keyword"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column prop="url" :label="$t('home.emoticonUrl')">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.url"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('home.operation')" width="170">
+                <template slot-scope="scope">
+                  <el-button-group>
+                    <el-button type="primary" icon="el-icon-upload2" :disabled="!serverConfig.enableUploadFile"
+                      @click="uploadEmoticon(scope.row)"
+                    ></el-button>
+                    <el-button type="danger" icon="el-icon-minus" @click="delEmoticon(scope.$index)"></el-button>
+                  </el-button-group>
+                </template>
+              </el-table-column>
+            </el-table>
+            <p>
+              <el-button type="primary" icon="el-icon-plus" @click="addEmoticon">{{$t('home.addEmoticon')}}</el-button>
+            </p>
           </el-tab-pane>
         </el-tabs>
       </el-form>
@@ -207,12 +235,12 @@
         <el-form :model="form" label-width="150px">
           <el-form-item :label="$t('home.roomUrl')">
             <el-input ref="roomUrlInput" readonly :value="obsRoomUrl" style="width: calc(100% - 8em); margin-right: 1em;"></el-input>
-            <el-button type="primary" @click="copyUrl">{{$t('home.copy')}}</el-button>
+            <el-button type="primary" icon="el-icon-copy-document" @click="copyUrl"></el-button>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="enterBilibili">{{$t('home.enterBilibili')}}</el-button>
             <el-button type="primary" :disabled="!roomUrl" @click="enterRoom">{{$t('home.enterRoom')}}</el-button>
-            <el-button :disabled="!roomUrl" @click="enterTestRoom">{{$t('home.enterTestRoom')}}</el-button>
+            <el-button @click="enterTestRoom">{{$t('home.enterTestRoom')}}</el-button>
             <el-button @click="exportConfig">{{$t('home.exportConfig')}}</el-button>
             <el-button @click="importConfig">{{$t('home.importConfig')}}</el-button>
           </el-form-item>
@@ -224,10 +252,10 @@
 
 <script>
 import _ from 'lodash'
-import axios from 'axios'
 import download from 'downloadjs'
 
-import {mergeConfig} from '@/utils'
+import { mergeConfig } from '@/utils'
+import * as mainApi from '@/api/main'
 import * as chatConfig from '@/api/chatConfig'
 
 export default {
@@ -236,13 +264,14 @@ export default {
     return {
       serverConfig: {
         enableTranslate: true,
+        enableUploadFile: true,
         loaderUrl: ''
       },
       form: {
-        roomId: parseInt(window.localStorage.roomId || '1'),
-        ...chatConfig.getLocalConfig()
+        ...chatConfig.getLocalConfig(),
+        roomId: parseInt(window.localStorage.roomId || '1')
       }
-      
+
     }
   },
   computed: {
@@ -277,10 +306,43 @@ export default {
   methods: {
     async updateServerConfig() {
       try {
-        this.serverConfig = (await axios.get('/api/server_info')).data.config
+        this.serverConfig = (await mainApi.getServerInfo()).config
       } catch (e) {
-        this.$message.error('Failed to fetch server information: ' + e)
+        this.$message.error(`Failed to fetch server information: ${e}`)
+        throw e
       }
+    },
+
+    addEmoticon() {
+      this.form.emoticons.push({
+        keyword: '[Kappa]',
+        url: ''
+      })
+    },
+    delEmoticon(index) {
+      this.form.emoticons.splice(index, 1)
+    },
+    uploadEmoticon(emoticon) {
+      let input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/png, image/jpeg, image/jpg, image/gif'
+      input.onchange = async() => {
+        let file = input.files[0]
+        if (file.size > 1024 * 1024) {
+          this.$message.error(this.$t('home.emoticonFileTooLarge'))
+          return
+        }
+
+        let res
+        try {
+          res = await mainApi.uploadEmoticon(file)
+        } catch (e) {
+          this.$message.error(`Failed to upload: ${e}`)
+          throw e
+        }
+        emoticon.url = res.url
+      }
+      input.click()
     },
     enterBilibili() {
       window.open(`https://live.bilibili.com/${this.form.roomId}`, '_blank')
@@ -292,16 +354,22 @@ export default {
       window.open(this.getRoomUrl(true), 'test room', 'menubar=0,location=0,scrollbars=0,toolbar=0,width=600,height=600')
     },
     getRoomUrl(isTestRoom) {
-      if (isTestRoom && this.form.roomId === '') {
+      if (!isTestRoom && this.form.roomId === '') {
         return ''
       }
-      let query = {...this.form}
+
+      let query = {
+        ...this.form,
+        emoticons: JSON.stringify(this.form.emoticons),
+        lang: this.$i18n.locale
+      }
       delete query.roomId
+
       let resolved
       if (isTestRoom) {
-        resolved = this.$router.resolve({name: 'test_room', query})
+        resolved = this.$router.resolve({ name: 'test_room', query })
       } else {
-        resolved = this.$router.resolve({name: 'room', params: {roomId: this.form.roomId}, query})
+        resolved = this.$router.resolve({ name: 'room', params: { roomId: this.form.roomId }, query })
       }
       return `${window.location.protocol}//${window.location.host}${resolved.href}`
     },
@@ -327,12 +395,19 @@ export default {
             this.$message.error(this.$t('home.failedToParseConfig') + e)
             return
           }
-          cfg = mergeConfig(cfg, chatConfig.DEFAULT_CONFIG)
-          this.form = {roomId: this.form.roomId, ...cfg}
+          this.importConfigFromObj(cfg)
         }
         reader.readAsText(input.files[0])
       }
       input.click()
+    },
+    importConfigFromObj(cfg) {
+      cfg = mergeConfig(cfg, chatConfig.deepCloneDefaultConfig())
+      chatConfig.sanitizeConfig(cfg)
+      this.form = {
+        ...cfg,
+        roomId: this.form.roomId
+      }
     }
   }
 }

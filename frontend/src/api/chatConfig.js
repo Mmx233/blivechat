@@ -1,4 +1,6 @@
-import {mergeConfig} from '@/utils'
+import _ from 'lodash'
+
+import { mergeConfig } from '@/utils'
 
 export const DEFAULT_CONFIG = {
   minGiftPrice: 0, // ￥0.0
@@ -35,18 +37,48 @@ export const DEFAULT_CONFIG = {
 
   relayMessagesByServer: false,
   autoTranslate: false,
-  giftUsernamePronunciation: ''
+  giftUsernamePronunciation: '',
+
+  emoticons: [] // [{ keyword: '', url: '' }, ...]
 }
 
-export function setLocalConfig (config) {
+export function deepCloneDefaultConfig() {
+  return _.cloneDeep(DEFAULT_CONFIG)
+}
+
+export function setLocalConfig(config) {
   config = mergeConfig(config, DEFAULT_CONFIG)
   window.localStorage.config = JSON.stringify(config)
 }
 
-export function getLocalConfig () {
+export function getLocalConfig() {
   try {
-    return mergeConfig(JSON.parse(window.localStorage.config), DEFAULT_CONFIG)
+    let config = JSON.parse(window.localStorage.config)
+    config = mergeConfig(config, deepCloneDefaultConfig())
+    sanitizeConfig(config)
+    return config
   } catch {
-    return {...DEFAULT_CONFIG}
+    return deepCloneDefaultConfig()
   }
+}
+
+export function sanitizeConfig(config) {
+  let newEmoticons = []
+  if (config.emoticons instanceof Array) {
+    for (let emoticon of config.emoticons) {
+      try {
+        let newEmoticon = {
+          keyword: emoticon.keyword,
+          url: emoticon.url
+        }
+        if ((typeof newEmoticon.keyword !== 'string') || (typeof newEmoticon.url !== 'string')) {
+          continue
+        }
+        newEmoticons.push(newEmoticon)
+      } catch {
+        continue
+      }
+    }
+  }
+  config.emoticons = newEmoticons
 }

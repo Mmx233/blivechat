@@ -1,10 +1,10 @@
 export default {
   sidebar: {
     home: 'Home',
-    stylegen: 'Style generator',
+    stylegen: 'Style Generator',
     help: 'Help',
-    projectAddress: 'Project address',
-    giftRecordOfficial: 'Official Super Chat record',
+    projectAddress: 'Project Address',
+    giftRecordOfficial: 'Official Super Chat Record',
   },
   home: {
     roomIdEmpty: "Room ID can't be empty",
@@ -31,7 +31,7 @@ export default {
     maxNumber: 'Max number of messages',
     fadeOutNum: 'number of fade out message',
     pinTime: 'message remain time(0 remain forever)',
-    
+
     imageShowType: 'Way image show',
     imageShowTypes: [
       {
@@ -67,6 +67,13 @@ export default {
     pinyin: 'Pinyin',
     kana: 'Kana',
 
+    emoticon: 'Custom Emotes',
+    emoticonKeyword: 'Emote Code',
+    emoticonUrl: 'URL',
+    operation: 'Operation',
+    addEmoticon: 'Add emote',
+    emoticonFileTooLarge: 'File size is too large. Max size is 1MB',
+
     testing: 'Testing',
     minDanmakuInterval: 'min interval of message sending',
     maxDanmakuInterval: 'max interval of message sending',
@@ -101,7 +108,7 @@ export default {
     showAvatars: 'Show avatars',
     avatarSize: 'Avatar size',
 
-    userNames: 'User names',
+    userNames: 'User Names',
     showUserNames: 'Show user names',
     font: 'Font',
     fontSize: 'Font size',
@@ -113,6 +120,7 @@ export default {
     memberColor: 'Member color',
     showBadges: 'Show user badges',
     showColon: 'Show colon after name',
+    emoticonSize: 'Emoticon size',
 
     medal: 'Fan badge',
     showMedal: 'Show fan badge',
@@ -135,7 +143,7 @@ export default {
     moderatorMessageBgColor: 'Moderator background color',
     memberMessageBgColor: 'Member background color',
 
-    scAndNewMember: 'Super Chat / New member',
+    scAndNewMember: 'Super Chat / New Member',
     firstLineFont: 'First line font',
     firstLineFontSize: 'First line font size',
     firstLineLineHeight: 'First line line height (0 for default)',
@@ -173,5 +181,14 @@ export default {
     p3: '3. Generate styles with the style generator. Copy the CSS',
     p4: '4. Add browser source in OBS',
     p5: '5. Enter the previously copied room URL at URL, and enter the previously copied CSS at custom CSS'
+  },
+  chat: {
+    moderator: 'moderator',
+    guardLevel1: 'governor',
+    guardLevel2: 'admiral',
+    guardLevel3: 'captain',
+    sendGift: 'Sent {giftName}x{num}',
+    membershipTitle: 'New member',
+    tickerMembership: 'Member'
   }
 }

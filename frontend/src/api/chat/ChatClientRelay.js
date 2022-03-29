@@ -7,11 +7,14 @@ const COMMAND_ADD_SUPER_CHAT = 5
 const COMMAND_DEL_SUPER_CHAT = 6
 const COMMAND_UPDATE_TRANSLATION = 7
 
+// const CONTENT_TYPE_TEXT = 0
+const CONTENT_TYPE_EMOTICON = 1
+
 const HEARTBEAT_INTERVAL = 10 * 1000
-const RECEIVE_TIMEOUT = HEARTBEAT_INTERVAL + 5 * 1000
+const RECEIVE_TIMEOUT = HEARTBEAT_INTERVAL + (5 * 1000)
 
 export default class ChatClientRelay {
-  constructor (roomId, autoTranslate) {
+  constructor(roomId, autoTranslate) {
     this.roomId = roomId
     this.autoTranslate = autoTranslate
 
@@ -29,32 +32,30 @@ export default class ChatClientRelay {
     this.receiveTimeoutTimerId = null
   }
 
-  start () {
+  start() {
     this.wsConnect()
   }
 
-  stop () {
+  stop() {
     this.isDestroying = true
     if (this.websocket) {
       this.websocket.close()
     }
   }
 
-  wsConnect () {
+  wsConnect() {
     if (this.isDestroying) {
       return
     }
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    // 开发时使用localhost:12450
-    const host = process.env.NODE_ENV === 'development' ? 'localhost:12450' : window.location.host
-    const url = `${protocol}://${host}/api/chat`
+    const url = `${protocol}://${window.location.host}/api/chat`
     this.websocket = new WebSocket(url)
     this.websocket.onopen = this.onWsOpen.bind(this)
     this.websocket.onclose = this.onWsClose.bind(this)
     this.websocket.onmessage = this.onWsMessage.bind(this)
   }
 
-  onWsOpen () {
+  onWsOpen() {
     this.retryCount = 0
     this.websocket.send(JSON.stringify({
       cmd: COMMAND_JOIN_ROOM,
@@ -69,7 +70,7 @@ export default class ChatClientRelay {
     this.refreshReceiveTimeoutTimer()
   }
 
-  sendHeartbeat () {
+  sendHeartbeat() {
     this.websocket.send(JSON.stringify({
       cmd: COMMAND_HEARTBEAT
     }))
@@ -83,7 +84,7 @@ export default class ChatClientRelay {
   }
 
   onReceiveTimeout() {
-    window.console.warn('接收消息超时')
+    console.warn('接收消息超时')
     this.receiveTimeoutTimerId = null
 
     // 直接丢弃阻塞的websocket，不等onclose回调了
@@ -92,7 +93,7 @@ export default class ChatClientRelay {
     this.onWsClose()
   }
 
-  onWsClose () {
+  onWsClose() {
     this.websocket = null
     if (this.heartbeatTimerId) {
       window.clearInterval(this.heartbeatTimerId)
@@ -106,14 +107,14 @@ export default class ChatClientRelay {
     if (this.isDestroying) {
       return
     }
-    window.console.warn(`掉线重连中${++this.retryCount}`)
+    console.warn(`掉线重连中${++this.retryCount}`)
     window.setTimeout(this.wsConnect.bind(this), 1000)
   }
 
-  onWsMessage (event) {
+  onWsMessage(event) {
     this.refreshReceiveTimeoutTimer()
 
-    let {cmd, data} = JSON.parse(event.data)
+    let { cmd, data } = JSON.parse(event.data)
     switch (cmd) {
     case COMMAND_HEARTBEAT: {
       break
@@ -122,6 +123,14 @@ export default class ChatClientRelay {
       if (!this.onAddText) {
         break
       }
+
+      let emoticon = null
+      let contentType = data[13]
+      let contentTypeParams = data[14]
+      if (contentType === CONTENT_TYPE_EMOTICON) {
+        emoticon = contentTypeParams[0]
+      }
+
       data = {
         avatarUrl: data[0],
         timestamp: data[1],
@@ -129,13 +138,14 @@ export default class ChatClientRelay {
         authorType: data[3],
         content: data[4],
         privilegeType: data[5],
-        isGiftDanmaku: !!data[6],
+        isGiftDanmaku: Boolean(data[6]),
         authorLevel: data[7],
-        isNewbie: !!data[8],
-        isMobileVerified: !!data[9],
+        isNewbie: Boolean(data[8]),
+        isMobileVerified: Boolean(data[9]),
         medalLevel: data[10],
         id: data[11],
-        translation: data[12]
+        translation: data[12],
+        emoticon: emoticon
       }
       this.onAddText(data)
       break

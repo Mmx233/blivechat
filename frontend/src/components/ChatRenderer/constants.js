@@ -1,7 +1,8 @@
+import * as i18n from '@/i18n'
+
 export const IMAGE_SHOW_TYPE_REPLACE_DIRECT = 0
 export const IMAGE_SHOW_TYPE_REPLACE = 1
 export const IMAGE_SHOW_TYPE_ADD_AFTER = 2
-
 
 export const AUTHRO_TYPE_NORMAL = 0
 export const AUTHRO_TYPE_MEMBER = 1
@@ -15,12 +16,20 @@ export const AUTHOR_TYPE_TO_TEXT = [
   'owner' // 主播
 ]
 
-export const GUARD_LEVEL_TO_TEXT = [
+const GUARD_LEVEL_TO_TEXT_KEY = [
   '',
-  '总督',
-  '提督',
-  '舰长'
+  'chat.guardLevel1',
+  'chat.guardLevel2',
+  'chat.guardLevel3'
 ]
+
+export function getShowGuardLevelText(guardLevel) {
+  let key = GUARD_LEVEL_TO_TEXT_KEY[guardLevel] || ''
+  if (key === '') {
+    return ''
+  }
+  return i18n.i18n.t(key)
+}
 
 export const MESSAGE_TYPE_TEXT = 0
 export const MESSAGE_TYPE_GIFT = 1
@@ -28,6 +37,9 @@ export const MESSAGE_TYPE_MEMBER = 2
 export const MESSAGE_TYPE_SUPER_CHAT = 3
 export const MESSAGE_TYPE_DEL = 4
 export const MESSAGE_TYPE_UPDATE = 5
+
+export const CONTENT_TYPE_TEXT = 0
+export const CONTENT_TYPE_IMAGE = 1
 
 export const MEDAL_CONFIGS = [
   {
@@ -110,10 +122,11 @@ export const MEDAL_CONFIGS = [
       textColor:`#5c968e`
     }
   }
-  
+
 ]
+
 // 美元 -> 人民币 汇率
-// const EXCHANGE_RATE = 7
+const EXCHANGE_RATE = 7
 export const PRICE_CONFIGS = [
   { // RMB 1000红
     price: 1000,
@@ -167,8 +180,8 @@ export const PRICE_CONFIGS = [
     },
     pinTime: 3
   },
-  { // RMB 1 蓝色
-    price: 1,
+  { // $1蓝
+    price: EXCHANGE_RATE,
     colors: {
       headerBg: 'rgba(21,101,192,1)',
       contentBg: 'rgba(30,136,229,1)',
@@ -217,7 +230,7 @@ export function getMedalConfig (level) {
   return PRICE_CONFIGS[PRICE_CONFIGS.length - 1]
 }
 
-export function getPriceConfig (price) {
+export function getPriceConfig(price) {
   for (const config of PRICE_CONFIGS) {
     if (price >= config.price) {
       return config
@@ -226,21 +239,32 @@ export function getPriceConfig (price) {
   return PRICE_CONFIGS[PRICE_CONFIGS.length - 1]
 }
 
-export function getShowContent (message) {
+export function getShowContent(message) {
   if (message.translation) {
     return `${message.content}（${message.translation}）`
   }
   return message.content
 }
 
-export function getGiftShowContent (message, showGiftInfo) {
-  if (!showGiftInfo) {
-    return ''
+export function getShowRichContent(message) {
+  let richContent = [...message.richContent]
+  if (message.translation) {
+    richContent.push({
+      type: CONTENT_TYPE_TEXT,
+      text: `（${message.translation}）`
+    })
   }
-  return `投喂 ${message.giftName}x${message.num}`
+  return richContent
 }
 
-export function getShowAuthorName (message) {
+export function getGiftShowContent(message, showGiftName) {
+  if (!showGiftName) {
+    return ''
+  }
+  return i18n.i18n.t('chat.sendGift', { giftName: message.giftName, num: message.num })
+}
+
+export function getShowAuthorName(message) {
   if (message.authorNamePronunciation && message.authorNamePronunciation !== message.authorName) {
     return `${message.authorName}(${message.authorNamePronunciation})`
   }

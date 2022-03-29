@@ -22,7 +22,7 @@ export default {
 
     danmakuAtBottom: 'コメントを下揃え',
     tickerAtButtom: '最低表示常駐Topスーパーチャットを下から現れる',
-    
+
     showTranslateDanmakuOnly: '翻訳コメントだけを表示する',
     translationSign: '翻訳コメントの合図キャラクタ',
     onlyOneCharacter: '一個キャラクタだけ、例：【',
@@ -68,12 +68,18 @@ export default {
     pinyin: 'ピンイン',
     kana: '仮名',
 
+    emoticon: 'カスタムスタンプ',
+    emoticonKeyword: '置き換えるキーワード',
+    emoticonUrl: 'URL',
+    operation: '操作',
+    addEmoticon: 'スタンプを追加',
+    emoticonFileTooLarge: 'ファイルサイズが大きすぎます。最大サイズは1MBです',
+
     testing: 'コメントテスト',
     minDanmakuInterval: '最小コメント間隔',
     maxDanmakuInterval: '最大コメント間隔',
 
     roomUrl: 'ルームのURL',
-    copy: 'コピー',
     enterBilibili: 'Bilibiliルームに入る',
     enterRoom: 'ルームに入る',
     enterTestRoom: 'テストルームに入る',
@@ -114,6 +120,7 @@ export default {
     memberColor: 'メンバーの色',
     showBadges: '勲章を見せる',
     showColon: 'ユーザー名の後にコロンが表示されます',
+    emoticonSize: 'スタンプサイズ',
 
     medal: 'ファン勲章',
     showMedal: 'ファン勲章を表示する',
@@ -174,5 +181,14 @@ export default {
     p3: '3. スタイルジェネレータでお好みのコメント様子を選び、出力したCSSをコピーする',
     p4: '4. OBSでブラウザを新規作成する',
     p5: '5. プロパティでこぴーしたURLを入力し、カスタムCSSでスタイルジェネレータのCSSを入力する'
+  },
+  chat: {
+    moderator: 'モデレーター',
+    guardLevel1: '総督',
+    guardLevel2: '提督',
+    guardLevel3: '艦長',
+    sendGift: '{giftName}x{num} を贈りました',
+    membershipTitle: '新規メンバー',
+    tickerMembership: 'メンバー'
   }
 }

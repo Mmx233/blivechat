@@ -19,8 +19,8 @@
               <img-shadow id="author-photo" height="24" width="24" class="style-scope yt-live-chat-ticker-paid-message-item-renderer"
                 :imgUrl="message.raw.avatarUrl"
               ></img-shadow>
-              <span id="text" dir="ltr" class="style-scope yt-live-chat-ticker-paid-message-item-renderer" v-if="message.raw.giftName !== undefined">{{
-                message.raw.giftName +"x"+ message.raw.num
+              <span id="text" dir="ltr" class="style-scope yt-live-chat-ticker-paid-message-item-renderer" v-if="message.raw.giftName !== undefined">
+              message.raw.giftName +"x"+ message.raw.num
               }}</span>
               <span  id="text" dir="ltr" class="style-scope yt-live-chat-ticker-paid-message-item-renderer" v-if="message.raw.giftName == undefined">{{
                 message.text
@@ -47,10 +47,10 @@
 
 <script>
 import * as chatConfig from '@/api/chatConfig'
-import {formatCurrency} from '@/utils'
-import ImgShadow from './ImgShadow.vue'
-import MembershipItem from './MembershipItem.vue'
-import PaidMessage from './PaidMessage.vue'
+import { formatCurrency } from '@/utils'
+import ImgShadow from './ImgShadow'
+import MembershipItem from './MembershipItem'
+import PaidMessage from './PaidMessage'
 import * as constants from './constants'
 
 export default {
@@ -150,7 +150,7 @@ export default {
         color2 = config.colors.headerBg
       }
       let pinTime = this.getPinTime(message)
-      let progress = (1 - (this.curTime - message.addTime) / (60 * 1000) / pinTime) * 100
+      let progress = (1 - ((this.curTime - message.addTime) / (60 * 1000) / pinTime)) * 100
       if (progress < 0) {
         progress = 0
       } else if (progress > 100) {
@@ -166,9 +166,9 @@ export default {
     },
     getText(message) {
       if (message.type === constants.MESSAGE_TYPE_MEMBER) {
-        return ''
+        return 'Member'
       }
-      return 'CN¥' + formatCurrency(message.price)
+      return `CN¥${formatCurrency(message.price)}`
     },
     getPinTime(message) {
       if (message.type === constants.MESSAGE_TYPE_MEMBER) {
@@ -185,18 +185,25 @@ export default {
       return constants.getPriceConfig(message.price).pinTime
     },
     updateProgress() {
+      // 更新进度
       this.curTime = new Date()
-      for (let i = 0; i < this.messages.length;) {
-        let message = this.messages[i]
+
+      // 删除过期的消息
+      let filteredMessages = []
+      let messagesChanged = false
+      for (let message of this.messages) {
         let pinTime = this.getPinTime(message)
         if ((this.curTime - message.addTime) / (60 * 1000) >= pinTime) {
-          if (this.pinnedMessage == message) {
+          messagesChanged = true
+          if (this.pinnedMessage === message) {
             this.pinnedMessage = null
           }
-          this.messages.splice(i, 1)
-        } else {
-          i++
+          continue
         }
+        filteredMessages.push(message)
+      }
+      if (messagesChanged) {
+        this.$emit('update:messages', filteredMessages)
       }
     },
     onItemClick(message) {

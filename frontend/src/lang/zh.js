@@ -26,7 +26,7 @@ export default {
     showTranslateDanmakuOnly: '只显示翻译弹幕',
     translationSign: '翻译弹幕首字符',
     onlyOneCharacter: '只能输入一个字符，如【',
-    
+
     minGiftPrice: '打赏弹幕最低显示价格(元)',
     minTickerPrice: '打赏停驻栏最低显示价格(元)',
     maxNumber: '最大弹幕数',
@@ -72,6 +72,12 @@ export default {
     minDanmakuInterval: '最小弹幕发送间隔',
     maxDanmakuInterval: '最大弹幕发送间隔',
 
+    emoticon: '自定义表情',
+    emoticonKeyword: '替换关键词',
+    emoticonUrl: 'URL',
+    operation: '操作',
+    addEmoticon: '添加表情',
+    emoticonFileTooLarge: '文件尺寸太大，最大1MB',
 
     roomUrl: '房间URL',
     copy: '复制',
@@ -93,7 +99,7 @@ export default {
     global: '全局',
     danmakuAtBottom: '弹幕从底部出现',
     tickerAtButtom: '底部显示SC固定栏',
-    
+
     outlines: '描边',
     showOutlines: '显示描边',
     outlineSize: '描边尺寸',
@@ -115,6 +121,7 @@ export default {
     memberColor: '舰长颜色',
     showBadges: '显示用户勋章',
     showColon: '用户名后显示冒号',
+    emoticonSize: '表情大小',
 
     medal: '粉丝勋章(牌子)',
     showMedal: '显示勋章',
@@ -175,5 +182,14 @@ export default {
     p3: '3. 使用样式生成器生成样式，复制CSS',
     p4: '4. 在OBS中添加浏览器源',
     p5: '5. URL处输入之前复制的房间URL，自定义CSS处输入之前复制的CSS'
+  },
+  chat: {
+    moderator: '管理员',
+    guardLevel1: '总督',
+    guardLevel2: '提督',
+    guardLevel3: '舰长',
+    sendGift: '赠送 {giftName}x{num}',
+    membershipTitle: '新会员',
+    tickerMembership: '会员'
   }
 }
