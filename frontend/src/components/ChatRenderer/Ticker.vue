@@ -19,7 +19,7 @@
               <img-shadow id="author-photo" height="24" width="24" class="style-scope yt-live-chat-ticker-paid-message-item-renderer"
                 :imgUrl="message.raw.avatarUrl"
               ></img-shadow>
-              <span id="text" dir="ltr" class="style-scope yt-live-chat-ticker-paid-message-item-renderer" v-if="message.raw.giftName !== undefined">
+              <span id="text" dir="ltr" class="style-scope yt-live-chat-ticker-paid-message-item-renderer" v-if="message.raw.giftName !== undefined">{{
               message.raw.giftName +"x"+ message.raw.num
               }}</span>
               <span  id="text" dir="ltr" class="style-scope yt-live-chat-ticker-paid-message-item-renderer" v-if="message.raw.giftName == undefined">{{
