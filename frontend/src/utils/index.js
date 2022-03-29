@@ -27,7 +27,7 @@ export function formatCurrency(price) {
   }).format(price)
 }
 
-export function toFloat (val, _default) {
+export function toFloat(val, _default) {
   let res = parseFloat(val)
   if (isNaN(res)) {
     res = _default
